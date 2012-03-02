@@ -1,200 +1,121 @@
 import read_mol2
 
 
-namefile = "prueba.mol2" #with format mol2
+namefile = "pentane.mol2" #with format mol2
 mol2file = open(namefile, "r")
 
-types = []
-spectypes = []
-m_bonds = []
-ring = []
-ringbonds = []
-tmplineno=0
-firstatomline=0
-lastatomline=0
-firstbondline=0
-lastbondline=0
+
+
+
 
 class SearchRotatable:
-    natoms=
-			$nbonds=$tmp[1];
-			
-		}
-		if(/TRIPOS>ATOM/){
-                        $firstatomline=$.+1;
-                        $lastatomline=$.+$natoms;
-                        #print "first $firstatomline last $lastatomline\n";
-                        next;
-                }
-                if($. == $firstatomline .. $. == $lastatomline){
-                        #print "linenumber $., \$lastatomline= $lastatomline, \$natoms=$natoms\n";
-                        chomp;
-                        @tmp=split;
-                        #create a list containing atom number as a key and type as a value
-                        $types{$tmp[0]}=$tmp[5];
-                }
-		if(/TRIPOS>BOND/){
-			$firstbondline=$.+1;
-			$lastbondline=$.+$nbonds;
-			#print "first $firstbondline last $lastbondline\n";
-			next;
-		}
+    def __init__(self, data):
+        natoms = data.num_atoms
+        nbonds = data.num_bonds
+        types = []	
+        spectypes = []
+        m_bonds = []
+        ring = []
+        ringbonds = []
+        neighb=()
+        #create a list containing atom number as a key and type as a value
+        for i in range(0,natoms):
+            types.append(data.atoms[i].atom_type)
+        #       for i in range(0,nbonds):
+        #          neighb.append(   
 
-		if($. == $firstbondline .. $. == $lastbondline){
-			#print "linenumber $., \$lastbondline= $lastbondline, \$nbonds=$nbonds\n";
-                        chomp;
-                        @tmp=split;
-                        #create an array of arrays containing bond data
-                        push @m_bonds, [ @tmp ];
-			#print "mbond $tmp[0] $tmp[1] $tmp[2]\n";
-		}
-	}
+        # before we start looking for non-rotatable bonds we determine if some atoms belong to some more complicated atom types	
+        for ind in range(0,len(types)):
+            # planar amine
+            if types[ind] == "N.pl3" or types[ind] == "N.2"
+                # there have to be exactly 2 hydrogens connected to it 
+                count = 0
+                for ibon in range(0,len(data.get_bonded_atoms(indice))):
+                    if data.get_bonded_atoms(ind+1)[ibon].atom_type == "H":
+                        count += 1 
+			    if count==2:
+    			    spectypes.append('planar_nh2')
+            # methyl and as a special case methyl connected to N,O or S.           
+            elif types[ind] ="C.3":
+                # there have to be exactly 3 hydrogens connected to it 
+    			count = 0
+    			noscount = 0
+    			for ibon in range(0,len(data.get_bonded_atoms(indice))):
+                    if data.get_bonded_atoms(ind+1)[ibon].atom_type == "H":
+                        count += 1 
+                    if data.get_bonded_atoms(ind+1)[ibon].atom_type == "N." or 
+                        data.get_bonded_atoms(ind+1)[ibon].atom_type == "O." or
+                        data.get_bonded_atoms(ind+1)[ibon].atom_type == "S.":
+                        noscount += 1
+                if count == 3:
+                    if noscount == 1:
+                        spectypes.append('nos_methyl')
+                    else:
+                        spectypes.append('methyl')
+            # amidine
+            elif types[ind] == "C.2" or types[ind] == "C.cat":
+    			count = 0
+    			noscount = 0
+    			for ibon in range(0,len(data.get_bonded_atoms(indice))):
+    			    if data.get_bonded_atoms(ind+1)[ibon].atom_type == "N.pl3" or data.get_bonded_atoms(ind+1)[ibon].atom_type == "N.2":
+    			        count += 1
+                if count == 2:
+                    spectypes.append('amidine')
+            # sulfonic acid
+            elif types[ind] == "S.3":
+                count = 0
+    			noscount = 0
+                for ibon in range(0,len(data.get_bonded_atoms(indice))):
+    			    if data.get_bonded_atoms(ind+1)[ibon].atom_type == "O.co2":
+    			        count += 1
+                if count == 3:
+                    spectypes.append('sulfonate')
+            # nitro,nitroso
+            elif types[ind] == "N.":
+                count = 0
+    			noscount = 0
+    		    for ibon in range(0,len(data.get_bonded_atoms(indice))):
+    			    if data.get_bonded_atoms(ind+1)[ibon].atom_type == "O.2":
+    			        count += 1
+                if count >= 1:
+                    spectypes.append('nitro')
+            # carboxylic acid
+            elif types[ind] == "C.2" or types[ind] == "C.cat":
+                count = 0
+    			noscount = 0
+    		    for ibon in range(0,len(data.get_bonded_atoms(indice))):
+    			    if data.get_bonded_atoms(ind+1)[ibon].atom_type == "O.co2":
+    			        count += 1
+                if count == 2:
+                    spectypes.append('carboxy')
+            #
+            else:
+                spectypes.append(None)
 
-	#foreach $i (keys %types){
-	#	print "types $i $types{$i}\n";
-        #        }
-
-	#print "items in \@m_bonds= $#m_bonds\n";
-	#foreach $i (0 .. $#m_bonds){
-	#	print "mbonds $i $m_bonds[$i]->[0] $m_bonds[$i]->[1] $m_bonds[$i]->[2]\n";
-        #        }
+            }
 
         
-        	my %neighb=();
-			foreach $ii (keys %neighb){
-				print " init $ii : @{$neighb{$ii}} \n";
-			}
-	foreach $i (keys %types){
-		for $j (0 .. $#m_bonds){  #find all bonds connected to that carbon
-			$i1 = $m_bonds[$j]->[1];
-			$i2 = $m_bonds[$j]->[2];
-			if($i1 == $i || $i2 == $i){
-				#print "$i1 $i2 $m_bonds[$j]->[3]\n";
-                                $atom=$i2 if($i1 == $i);
-                                $atom=$i1 if($i2 == $i);
-				push @{$neighb{$i}},$atom;
-				}
-		}
-	}
-# before we start looking for non-rotatable bonds we determine if some atoms belong to some more complicated atom types
-LSPC:	foreach $i (keys %types){
-		$count = 0;
-		my @values=@{$neighb{$i}};
-			for $j (0 .. $#values){
-#uncomment for debug#				print " $i neigh types: $types{$values[$j]}\n";
-			}
-#               planar amine
-		if($types{$i} =~ /N\.pl3|N\.2/){
-			# there have to be exactly 2 hydrogens connected to it 
-			for $j (0 .. $#values){
-				$count += 1 if $types{$values[$j]} =~ /H/;
-			}
-			if($count==2){
-				$spectypes{$i}='planar_nh2';
-				next LSPC;
-			}
-		}
-
-#               methyl
-#               and as a special case methyl connected to N,O or S.
-		if($types{$i} =~ /C\.3/){
-			# there have to be exactly 3 hydrogens connected to it 
-			my $noscount=0;
-			for $j (0 .. $#values){
-				$count += 1 if $types{$values[$j]} =~ /H/;
-				$noscount += 1 if $types{$values[$j]} =~ /N\.|O\.|S\./;
-			}
-			if($count==3){
-				if ($noscount==1){
-					$spectypes{$i}='nos_methyl';
-				}else{
-					$spectypes{$i}='methyl';
-				}
-				next LSPC;
-			}
-		}
-
-#               amidine
-		if($types{$i} =~ /C\.2|C\.cat/){
-			for $j (0 .. $#values){
-				$count += 1 if $types{$values[$j]} =~ /N.pl3|N.2/;
-			}
-			if($count==2){
-				$spectypes{$i}='amidine';
-				next LSPC;
-			}
-		}
-
-#               sulfonic acid
-		if($types{$i} =~ /S\.3/){
-			for $j (0 .. $#values){
-				$count += 1 if $types{$values[$j]} =~ /O\.co2/;
-			}
-			if($count==3){
-				$spectypes{$i}='sulfonate';
-				next LSPC;
-			}
-		}
-
-#               nitro,nitroso
-		if($types{$i} =~ /N\..*/){
-			for $j (0 .. $#values){
-				$count += 1 if $types{$values[$j]} =~ /O\.2/;
-			}
-			if($count>=1){
-				$spectypes{$i}='nitro';
-				next LSPC;
-			}
-		}
-
-#               carboxylic acid
-		if($types{$i} =~ /C\.2|C\.cat/){
-			for $j (0 .. $#values){
-				$count += 1 if $types{$values[$j]} =~ /O\.co2/;
-			}
-			if($count==2){
-				$spectypes{$i}='carboxy';
-				next LSPC;
-			}
-		}
-
-		$spectypes{$i}='none';
-	}
-#uncomment for debug#	foreach $i (keys %spectypes){
-#uncomment for debug#		print "spectype for $i $spectypes{$i}\n" unless ($spectypes{$i} =~ 'none');
-#uncomment for debug#                }
-
-#       initialize edges
-	my %edge=();
-	for $m (0 .. $#m_bonds){ 
-		$edge{$m}->[0] = $m_bonds[$m]->[1];
-		$edge{$m}->[1] = $m_bonds[$m]->[2];
-#uncomment for debug#			print "Edges $m ------ @{$edge{$m}} \n";
-	}
-
-#       initialize vertices; use the number of connectivities (neighbors) as the value.
-	my %vertex=();
-	foreach $m (keys %types){ 
-		$nb=@{$neighb{$m}} ;
-		$vertex{$m}=$nb;
-#uncomment for debug#		print "Vertices $m ======= $vertex{$m} \n";
-	}
-
-	$nv=scalar (keys %vertex);
-	$ne=scalar (keys %edge);
-#uncomment for debug#	print "Renewed vertices: $nv edges : $ne \n";
-
-	$oneneighbor=1;
-	while($oneneighbor>0){
-#       delete appendages to the rings. Update %vertex and %edge hashes
-		foreach $m (keys %vertex){ 
-			if($vertex{$m}==1){
-#uncomment for debug#				print "entry $m deleted in vertex\n";
-				delete $vertex{$m};
-				foreach  $n (keys %edge){ 
+        edge = []
+        vertex = []
+        for ind in range(0,len(types)):
+            # initialize edges
+            edge.append(
+            # initialize vertices; use the number of connectivities (neighbors) as the value.
+            vertex.append([ind,len(data.get_bonded_atoms(ind+1))])
+        
+        nv = len(vertex)            
+        ne = len(edge)	    
+        
+        oneneighbor=1
+        while oneneighbor > 0:
+        #       delete appendages to the rings. Update %vertex and %edge hashes
+		    for ind in range(0,len(vertex)): 
+    			if vertex[ind][1] == 1:
+                    vertex.pop(ind)
+					for  n (keys %edge){ 
 					$k1=$edge{$n}->[0];
 					$k2=$edge{$n}->[1];
-					if($k1==$m || $k2==$m){
+					if($k1== || $k2==$m){
 						delete $edge{$n};
 #uncomment for debug#						print "entry $n deleted in edge\n";
 						if($k1==$m){

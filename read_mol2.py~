@@ -225,7 +225,7 @@ class Mol2Bond:
 #
 #=====================================================================
 
-class ReadMol2(objetc):
+class ReadMol2(object):
     """
     This is to manage one mol2 series of lines on the form:
 @<TRIPOS>MOLECULE

@@ -26,7 +26,7 @@ class ConnectivityMatrix:
         # itarative over all bonds
         for ibonds in range(0,self.num_bonds):
             # assing 1 if atoms are bonded. precaution: atomid - 1 = column or row number. ie atom 1 = column/row 0, ...
-            cmatrix[self.bonds[ibonds][0] - 1,self.bonds[ibonds][1] -1 ] = 1
+            cmatrix[bonds[ibonds][0] - 1,bonds[ibonds][1] -1 ] = 1
         return cmatrix
 
 
