@@ -35,4 +35,5 @@ for ind in range(0,prueba.num_bonds):
 
 cmatrix = matrix_rotation.ConnectivityMatrix(prueba.num_atoms,prueba.num_bonds, bonds)
 
+
 print cmatrix.connectivity_matrix()
